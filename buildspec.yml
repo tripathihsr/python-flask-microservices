@@ -10,7 +10,8 @@ phases:
       - pip install pytest pytest-cov flask pytest-flask
       - pip install PyJWT requests  # For JWT token handling in MockData
       # Install any other specific dependencies your app needs
-      - if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi
+      #- if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi
+      - pip install -r requirements.txt
 
   pre_build:
     commands:
