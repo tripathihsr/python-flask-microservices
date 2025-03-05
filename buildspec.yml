@@ -1,0 +1,59 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - echo Installing dependencies...
+      - pip install --upgrade pip
+      - pip install pytest pytest-cov flask pytest-flask
+      - pip install PyJWT requests  # For JWT token handling in MockData
+      # Install any other specific dependencies your app needs
+      - if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi
+
+  pre_build:
+    commands:
+      - echo Setting up test environment...
+      - export PYTHONPATH=$PYTHONPATH:$(pwd)
+      - export TEST_ENV=codebuild  # Set environment to indicate we're in CodeBuild
+      - mkdir -p test-reports
+
+  build:
+    commands:
+      - echo Running unit tests for microservices application...
+      # Run tests that specifically use the MockData class
+      - pytest tests/ -v --junitxml=test-reports/test-results.xml --cov=. --cov-report=xml:test-reports/coverage.xml
+      # You can add specific test file patterns if needed
+      # - pytest tests/test_user_service.py tests/test_movie_service.py -v --junitxml=test-reports/test-results.xml
+
+  post_build:
+    commands:
+      - echo Tests completed on `date`
+      - echo Test coverage summary:
+      - coverage report
+      - echo Checking for test failures...
+      - test -f test-reports/test-results.xml || exit 1
+
+reports:
+  pytest_reports:
+    files:
+      - test-results.xml
+    base-directory: test-reports
+    file-format: JUNITXML
+  coverage_reports:
+    files:
+      - coverage.xml
+    base-directory: test-reports
+    file-format: COBERTURAXML
+
+artifacts:
+  files:
+    - test-reports/**/*
+    - appspec.yml
+    - '**/*'
+  discard-paths: no
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
